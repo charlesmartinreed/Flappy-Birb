@@ -16,14 +16,17 @@ class LevelScene: SKScene {
     var levelBG = SKSpriteNode()
     var pipe = SKSpriteNode()
     var scoreLabel = SKLabelNode()
+    var gameOverLabel = SKLabelNode()
+    var newHighScoreLabel = SKLabelNode()
     
     var playerScore: Int = 0 {
         didSet {
-            scoreLabel.text = "Score: \(playerScore)"
+            scoreLabel.text = "\(playerScore)"
         }
     }
+    var playerTopScore: Int = 0
     
-    var levelIsActive = true
+    var isGameOver = false
     let bgAnimationDuration: TimeInterval = 5.0
     var pipeGenerationTimer: Timer!
     var pipeSpawnFrequency: TimeInterval = 3.0
@@ -39,11 +42,19 @@ class LevelScene: SKScene {
         
         physicsWorld.contactDelegate = self
         initalizeMainGameScene()
-     
+        
+        if let currentHighScore = UserDefaults.standard.value(forKey: "playerTopScore") as? Int {
+            print("High score is: \(currentHighScore)")
+        } else {
+            print("No high score yet")
+        }
+        
     }
     
     //MARK:- Game init methods
     func initalizeMainGameScene() {
+        playerScore = 0
+        self.isPaused = false
         createBirbInScene()
         createLevelInScene()
         
@@ -82,11 +93,11 @@ class LevelScene: SKScene {
     //MARK:- Create level background
     func createLevelInScene() {
         //create score label
-        scoreLabel = SKLabelNode(fontNamed: "AvenirNextCondensed-Bold")
-        scoreLabel.fontSize = 48
-        scoreLabel.position = CGPoint(x: self.frame.minX + 100, y: self.frame.maxY - 75)
+        scoreLabel = SKLabelNode(fontNamed: "Helvetica")
+        scoreLabel.fontSize = 60
+        scoreLabel.position = CGPoint(x: self.frame.midX, y: self.frame.height / 2 - 70)
         scoreLabel.zPosition = 1
-        scoreLabel.text = "Score: \(playerScore)"
+        scoreLabel.text = "\(playerScore)"
         
         addChild(scoreLabel)
         
@@ -199,39 +210,63 @@ class LevelScene: SKScene {
     
     //MARK:- End round methods
     func endLevel() {
+        isGameOver = true
         scene?.isPaused = true
         pipeGenerationTimer.invalidate()
         
+        //display the game over screen
+        gameOverLabel = SKLabelNode(fontNamed: "Helvetica")
+        gameOverLabel.fontSize = 40
+        gameOverLabel.fontColor = UIColor.white
+        gameOverLabel.text = "Game over! Tap to play again."
+        gameOverLabel.position = CGPoint(x: self.frame.midX, y: self.frame.midY)
+        gameOverLabel.zPosition = 2
+        addChild(gameOverLabel)
+        
         //we'll also reset the scene here
+        if let currentTopScore = UserDefaults.standard.value(forKey: "playerTopScore") as? Int {
+            if playerScore > currentTopScore {
+                //notify the player and write the new score
+                newHighScoreLabel = SKLabelNode(fontNamed: "Helvetica")
+                newHighScoreLabel.fontSize = 60
+                newHighScoreLabel.fontColor = UIColor.red
+                newHighScoreLabel.text = "New high score!"
+                newHighScoreLabel.position = CGPoint(x: self.frame.midX, y: self.frame.midY - 70)
+                newHighScoreLabel.zPosition = 2
+                addChild(newHighScoreLabel)
+                
+                UserDefaults.standard.set(playerScore, forKey: "playerTopScore")
+            }
+        } else {
+            //if no current top score, create it for the first time
+            UserDefaults.standard.set(playerScore, forKey: "playerTopScore")
+        }
+        
     }
     
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
     
-        birb.physicsBody?.isDynamic = true
-        birb.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 50))
-    }
-    
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        //birb.texture = SKTexture(imageNamed: "flappy1")
-    }
-    
-    
-    
-    override func update(_ currentTime: TimeInterval) {
+        if !isGameOver {
+            birb.physicsBody?.isDynamic = true
+            birb.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 50))
+        } else {
+            isGameOver = false
+            scene?.removeAllChildren()
+            initalizeMainGameScene()
+        }
         
     }
 }
 
 extension LevelScene : SKPhysicsContactDelegate {
     func didBegin(_ contact: SKPhysicsContact) {
-       //if bird makes contact with gap between pipes, add to the score
+       //if birb makes contact with gap between pipes, add to the score
         if contact.bodyA.categoryBitMask == gapCategory || contact.bodyB.categoryBitMask == gapCategory {
-            print("point scored")
             playerScore += 1
         } else {
-            print("game over!")
-            //endLevel()
+            //if the birb touches ANYTHING else, game over!
+            endLevel()
         }
     }
 }
