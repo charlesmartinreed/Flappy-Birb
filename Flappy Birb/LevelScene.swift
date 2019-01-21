@@ -15,6 +15,13 @@ class LevelScene: SKScene {
     var birb = SKSpriteNode()
     var levelBG = SKSpriteNode()
     var pipe = SKSpriteNode()
+    var scoreLabel = SKLabelNode()
+    
+    var playerScore: Int = 0 {
+        didSet {
+            scoreLabel.text = "Score: \(playerScore)"
+        }
+    }
     
     var levelIsActive = true
     let bgAnimationDuration: TimeInterval = 5.0
@@ -24,6 +31,7 @@ class LevelScene: SKScene {
     //MARK:- Collision properties
     let birbCategory: UInt32 = 0x1 << 1 //1
     let pipeCategory: UInt32 = 0x1 << 2 //2
+    let gapCategory: UInt32 = 0x1 << 3 //4
     let boundingCategory: UInt32 = 0x1 << 4 //8
     
     
@@ -36,53 +44,73 @@ class LevelScene: SKScene {
     
     //MARK:- Game init methods
     func initalizeMainGameScene() {
-        if levelIsActive {
-            //MARK:- Add birb
-            let birbTexture = SKTexture(imageNamed: "flappy1")
-            let birbTexture2 = SKTexture(imageNamed: "flappy2")
-            
-            //animate the birb, perpetualy
-            let birbAnimation = SKAction.animate(with: [birbTexture, birbTexture2], timePerFrame: 0.1)
-            let makeBirbFlap = SKAction.repeatForever(birbAnimation)
-            
-            birb = SKSpriteNode(texture: birbTexture)
-            
-            //MARK:- Physics methods
-            birb.physicsBody = SKPhysicsBody(circleOfRadius: birbTexture.size().height / 2)
-            birb.physicsBody?.isDynamic = false //changed when the first touch is registered via touches began
-            birb.physicsBody?.categoryBitMask = birbCategory
-            birb.physicsBody?.contactTestBitMask = pipeCategory | boundingCategory
-            birb.physicsBody?.collisionBitMask = 0 //not colliding, but instead falling through. But we'll use the collision notification to end the game
-            
-            birb.position = CGPoint(x: self.frame.midX, y: self.frame.midY)
-            birb.zPosition = 1
-            birb.run(makeBirbFlap)
-            
-            addChild(birb)
-            
-            //MARK:- Add level background, animate the background slow to the left
-            let backgroundTexture = SKTexture(imageNamed: "bg")
-            
-            let moveBGOut = SKAction.moveBy(x: -backgroundTexture.size().width, y: 0, duration: bgAnimationDuration)
-            let moveBGIn = SKAction.moveBy(x: backgroundTexture.size().width, y: 0, duration: 0)
-            //let moveBGOut = SKAction.moveTo(x: -self.frame.width, duration: 5)
-            //let moveBGIn = SKAction.moveTo(x: self.frame.width, duration: 0)
-            let moveBGSequence = SKAction.sequence([moveBGOut, moveBGIn])
-            
-            //creating 3 backgrounds
-            for i in 0...2 {
-                levelBG = SKSpriteNode(texture: backgroundTexture)
-                levelBG.size.height = self.frame.height
-                levelBG.position = CGPoint(x: backgroundTexture.size().width * CGFloat(i), y: self.frame.midY) //first bg is aligned to the left of frame, subsequent ones are aligned to the right of the preceeding bg
-                levelBG.run(SKAction.repeatForever(moveBGSequence))
-                addChild(levelBG)
-            }
-            
-            createLevelBounds()
-            pipeGenerationTimer = Timer.scheduledTimer(timeInterval: pipeSpawnFrequency, target: self, selector: #selector(generatePipes), userInfo: nil, repeats: true)
-        }
-       
+        createBirbInScene()
+        createLevelInScene()
         
+        //start the timer for the generation of pipes
+        pipeGenerationTimer = Timer.scheduledTimer(timeInterval: pipeSpawnFrequency, target: self, selector: #selector(generatePipesForLevel), userInfo: nil, repeats: true)
+    }
+    
+    //MARK:- Add birb
+    func createBirbInScene() {
+        
+        let birbTexture = SKTexture(imageNamed: "flappy1")
+        let birbTexture2 = SKTexture(imageNamed: "flappy2")
+        
+        birb = SKSpriteNode(texture: birbTexture)
+        birb.name = "birb"
+        //animate the birb, perpetualy
+        let birbAnimation = SKAction.animate(with: [birbTexture, birbTexture2], timePerFrame: 0.1)
+        let makeBirbFlap = SKAction.repeatForever(birbAnimation)
+        
+        
+        
+        //MARK:- Physics methods
+        birb.physicsBody = SKPhysicsBody(circleOfRadius: birbTexture.size().height / 2)
+        birb.physicsBody?.isDynamic = false //changed when the first touch is registered via touches began
+        birb.physicsBody?.categoryBitMask = birbCategory
+        birb.physicsBody?.contactTestBitMask = pipeCategory | boundingCategory
+        birb.physicsBody?.collisionBitMask = 0 //not colliding, but instead falling through. But we'll use the collision notification to end the game
+        
+        birb.position = CGPoint(x: self.frame.midX, y: self.frame.midY)
+        birb.zPosition = 1
+        birb.run(makeBirbFlap)
+        
+        addChild(birb)
+    }
+    
+    //MARK:- Create level background
+    func createLevelInScene() {
+        //create score label
+        scoreLabel = SKLabelNode(fontNamed: "AvenirNextCondensed-Bold")
+        scoreLabel.fontSize = 48
+        scoreLabel.position = CGPoint(x: self.frame.minX + 100, y: self.frame.maxY - 75)
+        scoreLabel.zPosition = 1
+        scoreLabel.text = "Score: \(playerScore)"
+        
+        addChild(scoreLabel)
+        
+        scoreLabel.fontColor = SKColor.white
+        
+        //add level background, animate the background slow to the left
+        let backgroundTexture = SKTexture(imageNamed: "bg")
+        
+        let moveBGOut = SKAction.moveBy(x: -backgroundTexture.size().width, y: 0, duration: bgAnimationDuration)
+        let moveBGIn = SKAction.moveBy(x: backgroundTexture.size().width, y: 0, duration: 0)
+        //let moveBGOut = SKAction.moveTo(x: -self.frame.width, duration: 5)
+        //let moveBGIn = SKAction.moveTo(x: self.frame.width, duration: 0)
+        let moveBGSequence = SKAction.sequence([moveBGOut, moveBGIn])
+        
+        //creating 3 backgrounds
+        for i in 0...2 {
+            levelBG = SKSpriteNode(texture: backgroundTexture)
+            levelBG.size.height = self.frame.height
+            levelBG.position = CGPoint(x: backgroundTexture.size().width * CGFloat(i), y: self.frame.midY) //first bg is aligned to the left of frame, subsequent ones are aligned to the right of the preceeding bg
+            levelBG.run(SKAction.repeatForever(moveBGSequence))
+            addChild(levelBG)
+        }
+        
+        createLevelBounds()
     }
     
     //MARK:- Creating a floor for the level
@@ -99,7 +127,7 @@ class LevelScene: SKScene {
         addChild(ground)
     }
     
-    @objc func generatePipes() {
+    @objc func generatePipesForLevel() {
         //MARK:- Pipe positioning variables
         let gapHeight = birb.size.height * 4
         let movementAmount = arc4random() % UInt32(self.frame.height / 2) //between 0 and the remainder of our frame height
@@ -107,12 +135,11 @@ class LevelScene: SKScene {
         
         let pipeAnimationDuration = Double(self.frame.width) / 100 //duration is scaled according to the screen size - 600 pixels / 100 = 6 seconds
         
-        
         let pipeTexture1 = SKTexture(imageNamed: "pipe1")
         let pipeTexture2 = SKTexture(imageNamed: "pipe2")
         
         //animate the pipes
-        let movePipes = SKAction.moveBy(x: -2 * self.frame.width, y: 0, duration: pipeAnimationDuration)
+        let moveAndRemovePipes = SKAction.moveBy(x: -2 * self.frame.width, y: 0, duration: pipeAnimationDuration)
         
         
         let pipe1 = SKSpriteNode(texture: pipeTexture1)
@@ -127,7 +154,7 @@ class LevelScene: SKScene {
         pipe1.physicsBody?.collisionBitMask = 0
         
         pipe1.zPosition = 1
-        pipe1.run(movePipes) {
+        pipe1.run(moveAndRemovePipes) {
             pipe1.removeFromParent()
         }
         addChild(pipe1)
@@ -144,17 +171,38 @@ class LevelScene: SKScene {
         pipe2.physicsBody?.collisionBitMask = 0
         
         pipe2.zPosition = 1
-        pipe2.run(movePipes) {
+        pipe2.run(moveAndRemovePipes) {
             pipe2.removeFromParent()
         }
         addChild(pipe2)
+        
+        //create a invisible passthrough in the gap between pipes; when the player crosses this gap, they are granted a point
+        //x position is same position as the pipes, y position is the center of the gap
+        let gap = SKNode()
+        gap.name = "gap"
+        gap.position = CGPoint(x: self.frame.midX + self.frame.width, y: self.frame.midY + pipeOffset)
+        
+        //gap physics
+        gap.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: pipeTexture1.size().width, height: gapHeight))
+        gap.physicsBody?.isDynamic = false
+        gap.physicsBody?.affectedByGravity = false
+        
+        gap.physicsBody?.categoryBitMask = gapCategory
+        gap.physicsBody?.contactTestBitMask = birbCategory
+        gap.physicsBody?.collisionBitMask = gapCategory //allows bird to pass through
+        
+        gap.run(moveAndRemovePipes) {
+            gap.removeFromParent()
+        }
+        addChild(gap)
     }
     
     //MARK:- End round methods
     func endLevel() {
         scene?.isPaused = true
-        levelIsActive = false
         pipeGenerationTimer.invalidate()
+        
+        //we'll also reset the scene here
     }
     
     
@@ -177,9 +225,13 @@ class LevelScene: SKScene {
 
 extension LevelScene : SKPhysicsContactDelegate {
     func didBegin(_ contact: SKPhysicsContact) {
-       //only bird makes contact
-        print("We have contact")
-        
-        endLevel()
+       //if bird makes contact with gap between pipes, add to the score
+        if contact.bodyA.categoryBitMask == gapCategory || contact.bodyB.categoryBitMask == gapCategory {
+            print("point scored")
+            playerScore += 1
+        } else {
+            print("game over!")
+            //endLevel()
+        }
     }
 }
