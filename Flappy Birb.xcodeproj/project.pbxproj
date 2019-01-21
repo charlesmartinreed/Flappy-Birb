@@ -15,6 +15,7 @@
 		8CA25FCA21F52D5B00F05F99 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CA25FC821F52D5B00F05F99 /* Main.storyboard */; };
 		8CA25FCC21F52D5D00F05F99 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8CA25FCB21F52D5D00F05F99 /* Assets.xcassets */; };
 		8CA25FCF21F52D5D00F05F99 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CA25FCD21F52D5D00F05F99 /* LaunchScreen.storyboard */; };
+		8CA25FD721F564E800F05F99 /* TitleScreenScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA25FD621F564E800F05F99 /* TitleScreenScene.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 		8CA25FCB21F52D5D00F05F99 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8CA25FCE21F52D5D00F05F99 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8CA25FD021F52D5D00F05F99 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		8CA25FD621F564E800F05F99 /* TitleScreenScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TitleScreenScene.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +66,7 @@
 				8CA25FC021F52D5B00F05F99 /* LevelScene.sks */,
 				8CA25FC221F52D5B00F05F99 /* Actions.sks */,
 				8CA25FC421F52D5B00F05F99 /* LevelScene.swift */,
+				8CA25FD621F564E800F05F99 /* TitleScreenScene.swift */,
 				8CA25FC621F52D5B00F05F99 /* GameViewController.swift */,
 				8CA25FC821F52D5B00F05F99 /* Main.storyboard */,
 				8CA25FCB21F52D5D00F05F99 /* Assets.xcassets */,
@@ -147,6 +150,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8CA25FC521F52D5B00F05F99 /* LevelScene.swift in Sources */,
+				8CA25FD721F564E800F05F99 /* TitleScreenScene.swift in Sources */,
 				8CA25FC721F52D5B00F05F99 /* GameViewController.swift in Sources */,
 				8CA25FBF21F52D5B00F05F99 /* AppDelegate.swift in Sources */,
 			);
