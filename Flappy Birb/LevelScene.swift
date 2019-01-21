@@ -19,6 +19,7 @@ class LevelScene: SKScene {
     var levelIsActive = true
     let bgAnimationDuration: TimeInterval = 5.0
     var pipeGenerationTimer: Timer!
+    var pipeSpawnFrequency: TimeInterval = 3.0
     
     //MARK:- Collision properties
     
@@ -69,7 +70,9 @@ class LevelScene: SKScene {
         }
         
         createLevelBounds()
-        generatePipes()
+        
+        pipeGenerationTimer = Timer.scheduledTimer(timeInterval: pipeSpawnFrequency, target: self, selector: #selector(generatePipes), userInfo: nil, repeats: true)
+        
     }
     
     //MARK:- Creating a floor for the level
@@ -82,23 +85,38 @@ class LevelScene: SKScene {
     }
     
     @objc func generatePipes() {
+        //MARK:- Pipe positioning variables
         let gapHeight = birb.size.height * 4
-        
         let movementAmount = arc4random() % UInt32(self.frame.height / 2) //between 0 and the remainder of our frame height
         let pipeOffset = CGFloat(movementAmount) - self.frame.height / 4 //between -1/4 and +1/4 of screen height
+        
+        let pipeAnimationDuration = Double(self.frame.width) / 100 //duration is scaled according to the screen size - 600 pixels / 100 = 6 seconds
         
         
         let pipeTexture1 = SKTexture(imageNamed: "pipe1")
         let pipeTexture2 = SKTexture(imageNamed: "pipe2")
         
+        //animate the pipes
+        let movePipes = SKAction.moveBy(x: -2 * self.frame.width, y: 0, duration: pipeAnimationDuration)
+        
+        
+        
         let pipe1 = SKSpriteNode(texture: pipeTexture1)
-        pipe1.position = CGPoint(x: self.frame.midX, y: self.frame.midY + pipeTexture1.size().height / 2 + gapHeight / 2 + pipeOffset)
+        pipe1.position = CGPoint(x: self.frame.midX + self.frame.width, y: self.frame.midY + pipeTexture1.size().height / 2 + gapHeight / 2 + pipeOffset) //start just off screen
         pipe1.zPosition = 1
+        pipe1.run(movePipes) {
+            pipe1.removeFromParent()
+        }
+        
         addChild(pipe1)
         
         let pipe2 = SKSpriteNode(texture: pipeTexture2)
-        pipe2.position = CGPoint(x: self.frame.midX, y: -self.frame.midY - pipeTexture2.size().height / 2 - gapHeight / 2 + pipeOffset)
+        pipe2.position = CGPoint(x: self.frame.midX + self.frame.width, y: -self.frame.midY - pipeTexture2.size().height / 2 - gapHeight / 2 + pipeOffset)
         pipe2.zPosition = 1
+        pipe2.run(movePipes) {
+            pipe2.removeFromParent()
+        }
+        
         addChild(pipe2)
     }
     
